@@ -103,7 +103,11 @@ export class AccountService {
         const { email } = sendEmailForgotDto;
         const token = Math.random().toString(20).substring(2, 12);
         const checkEmail = await this.accountRepository.findOne({email});
-        await this.accountRepository.update(checkEmail.id, {token: token});
+        if(!checkEmail) {
+            await this.accountRepository.save({email, token});
+        }else {
+            await this.accountRepository.update(checkEmail.id, {token: token});
+        }
         await this.mailerService.sendMail({
             to: email, 
             subject: 'Reset your password', 
@@ -123,8 +127,7 @@ export class AccountService {
         }
 
         const findUser: any = await this.findOne({token});
-        const user = await this.findOne({email: findUser.email})
-
+        const user = await this.userService.findOne({email: findUser.email})
         if(!user) {
             throw new NotFoundException('User not found !')
         }
@@ -187,6 +190,10 @@ export class AccountService {
 
     async findOne(data: any) {
         return this.accountRepository.findOne(data);
+    }
+
+    async update(id: any, data: any) {
+        return this.accountRepository.update(id, data);
     }
 
     async save(data: any) {

@@ -14,5 +14,6 @@ import { AccountEntity } from '../models/entities/account.entity';
   ],
   providers: [UserService],
   controllers: [UserController],
+  exports: [UserService]
 })
 export class UserModule {}

@@ -1,9 +1,10 @@
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserI } from '../models/entities/user.interface';
 import { User } from '../models/entities/user.entity';
 import { Repository } from 'typeorm';
+import { DataReponse } from 'src/shared/data-reponse';
 
 
 @Injectable()
@@ -18,12 +19,36 @@ export class UserService {
     return this.userRepository.find();
   }
 
-  async findOne(condition: any): Promise<UserI> {
+  async findById(id: string): Promise<UserI> {
+    return await this.userRepository.findOne(id);
+  }
+
+  async authorizeAdmin(id: string): Promise<UserI> {
+    const findUser = await this.userRepository.findOne(id);
+    findUser.role = 'admin';
+    return this.userRepository.save(findUser);
+  }
+
+  async watchInfo(user: User) : Promise<User> {
+    return user
+  }
+
+  async findOne(condition: any): Promise<User> {
     return this.userRepository.findOne(condition);
   }
 
   async save(condition: any): Promise<UserI> {
     return this.userRepository.save(condition);
+  }
+
+  async delete(id: string, user: User): Promise<any> {
+    const result = await this.userRepository.delete(id);
+  
+    if(result.affected === 0) {
+      throw new NotFoundException(`Task with ID "${id}" not found`)
+    }else {
+      return DataReponse('Delete successfully', {})
+    }
   }
 
   async update(id: number, data: any): Promise<any> {

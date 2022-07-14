@@ -1,7 +1,8 @@
 /* eslint-disable prettier/prettier */
 
 import { Project } from 'src/api/project/models/entities/project.entity';
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Projects_Members } from 'src/api/project/models/entities/projects_members.entity';
+import { Column, CreateDateColumn, Entity, JoinTable, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { UserRoleEnum } from './user-role.enum';
 
 
@@ -31,7 +32,11 @@ export class User {
     @Column({default: false})
     isActive: boolean;
 
-    @OneToMany(() => Project, (project) => project.manager)
+    @OneToMany(() => Project, (project) => project.manager, { eager: true})
+    projectsManager: Project[];
+
+    @OneToMany(() => Projects_Members, (project: Projects_Members) => project.user, { eager: true })
+    @JoinTable({ name: 'projects_members'})
     projects: Project[];
 }
 

@@ -2,12 +2,11 @@
 
 import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthGuard } from '@nestjs/passport';
 import { UserRoleEnum } from 'src/api/user/models/entities/user-role.enum';
 import { ROLES_KEY } from './config.decorator';
 
 // @Injectable()
-// export class RolesGuard extends AuthGuard('jwt')  {
+// export class RoleAdminOrSuperAdmin extends AuthGuard('jwt')  {
 //   async canActivate(context: ExecutionContext): Promise<boolean> {
 
 //     // call AuthGuard in order to ensure user is injected in request
@@ -24,7 +23,7 @@ import { ROLES_KEY } from './config.decorator';
 // }
 
 @Injectable()
-export class RolesGuard implements CanActivate {
+export class RoleAdminOrSuperAdmin implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -36,7 +35,22 @@ export class RolesGuard implements CanActivate {
       return true;
     }
     const { user } = context.switchToHttp().getRequest();
-    console.log(user)
     return !requiredRoles.some((role) => user.role?.includes(role));
+  }
+}
+
+export class RoleSuperAdmin implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const requiredRoles = this.reflector.getAllAndOverride<UserRoleEnum[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (!requiredRoles) {
+      return true;
+    }
+    const { user } = context.switchToHttp().getRequest();
+    return requiredRoles.some((role) => user.role?.includes(role));
   }
 }

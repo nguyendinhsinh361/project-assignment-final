@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-export enum ProjectStatusEnum {
+export enum TaskStatusEnum {
     PENDING = "pending",
     IN_PROGRESS = "in_progress",
     FAILED = "failed",

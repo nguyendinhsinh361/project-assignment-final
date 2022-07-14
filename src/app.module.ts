@@ -8,6 +8,8 @@ import { AccountModule } from './api/user/modules/account.module';
 import { UserModule } from './api/user/modules/user.module';
 import { configValidationSchema } from './config/config.schema';
 import { ProjectModule } from './api/project/modules/project.module';
+import { TasksModule } from './api/task/modules/task.module';
+import { SubTaskModule } from './api/sub-task/modules/sub-task.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { ProjectModule } from './api/project/modules/project.module';
     UserModule,
     AccountModule,
     ProjectModule,
+    TasksModule,
+    SubTaskModule,
   ],
   providers: [],
 })

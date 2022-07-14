@@ -1,11 +1,16 @@
 /* eslint-disable prettier/prettier */
 
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
-export class GetTasksFilterDto {
-
-    @ApiProperty()
+export class GetFilterDto {
+    @ApiProperty({ required: false})
+    @IsOptional()
     @IsString()
+    projectCode?: string;
+
+    @ApiProperty({ required: false})
+    @IsString()
+    @IsOptional()
     search?: string;
 }
