@@ -7,9 +7,7 @@ import { UserRoleEnum } from "src/api/user/models/entities/user-role.enum";
 import { User } from "src/api/user/models/entities/user.entity";
 import { GetUser, Roles } from "src/shared/config.decorator";
 import { GetFilterDto } from "src/shared/get-filter.dto";
-import { ReportAdminI } from "src/shared/report-admin.interface copy";
-import { ReportSuperAdminI } from "src/shared/report-spa.interface";
-import { RoleAdminOrSuperAdmin, RoleSuperAdmin } from "src/shared/roles.guard";
+import { RoleAdminOrSuperAdmin } from "src/shared/role-admin-or-spa.guard";
 import { AddMemberDto } from "../models/dto/add-member.dto";
 import { CreateProjectDto } from "../models/dto/create-project.dto";
 import { DeleteMember } from "../models/dto/delete-member.dto";
@@ -24,7 +22,7 @@ export class ProjectController {
     private projectService: ProjectService,
   ) {}
 
-  @Get()
+  @Get('/get-many')
   @ApiBearerAuth()
   @Roles(UserRoleEnum.USER)
   @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
@@ -40,7 +38,7 @@ export class ProjectController {
       return this.projectService.getFilters(filterDto, user);
   }
 
-  @Post()
+  @Post('/create')
   @ApiBearerAuth()
   @Roles(UserRoleEnum.USER)
   @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
@@ -56,7 +54,7 @@ export class ProjectController {
       return this.projectService.createProject(createProjectDto, user);
   }
 
-  @Delete('/:id_project')
+  @Delete('/delete/:id_project')
   @ApiBearerAuth()
   @Roles(UserRoleEnum.USER)
   @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
@@ -72,7 +70,7 @@ export class ProjectController {
       return this.projectService.delete(id, user);
   }
 
-  @Patch('/:id_project')
+  @Patch('/update/:id_project')
   @ApiBearerAuth()
   @Roles(UserRoleEnum.USER)
   @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
@@ -89,7 +87,7 @@ export class ProjectController {
       return this.projectService.update(id, updateProjectDto, user);
   }
 
-  @Get('/:id_project')
+  @Get('/get-detail/:id_project')
   @ApiBearerAuth()
   @ApiResponse({
     status: 200,
@@ -100,7 +98,7 @@ export class ProjectController {
     return this.projectService.getById(id);
   }
 
-  @Post('/:id_project/add_member')
+  @Post('/add_member/:id_projec')
   @ApiBearerAuth()
   @Roles(UserRoleEnum.USER)
   @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
@@ -117,7 +115,7 @@ export class ProjectController {
       return this.projectService.addMember(id_project, email, user);
   }
 
-  @Delete('/:id_project/delete_member')
+  @Delete('/delete_member/:id_project')
   @ApiBearerAuth()
   @Roles(UserRoleEnum.USER)
   @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
@@ -134,7 +132,7 @@ export class ProjectController {
       return this.projectService.deleteMember(id_project, email, user);
   }
 
-  @Get('/:id_project/get_all_members')
+  @Get('/get_all_members/:id_project')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiResponse({
@@ -146,35 +144,5 @@ export class ProjectController {
       @Param('id_project') id_project: string,
     ): Promise<Project[]> {
       return this.projectService.getAllMemberInProject(id_project);
-  }
-
-  @Get()
-  @ApiBearerAuth()
-  @Roles(UserRoleEnum.SUPER_ADMIN)
-  @UseGuards(JwtAuthGuard, RoleSuperAdmin)
-  @ApiResponse({
-    status: 200,
-    description: 'Get all reports',
-  })
-  @ApiOperation({ summary: 'Get all reports' })
-  getAllReport(
-    @GetUser() user: User,
-    ): Promise<ReportSuperAdminI[]> {
-      return this.projectService.getAllReport(user);
-  }
-
-  @Get()
-  @ApiBearerAuth()
-  @Roles(UserRoleEnum.USER)
-  @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
-  @ApiResponse({
-    status: 200,
-    description: 'Get report detail',
-  })
-  @ApiOperation({ summary: 'Get report detail' })
-  getReportDetail(
-    @GetUser() user: User,
-    ): Promise<ReportAdminI> {
-      return this.projectService.getReportDetail(user);
   }
 }

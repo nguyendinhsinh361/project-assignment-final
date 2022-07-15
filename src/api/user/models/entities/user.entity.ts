@@ -14,6 +14,9 @@ export class User {
     @Column({unique: true})
     name: string;
 
+    @Column({ default: null })
+    avatar: string;
+
     @Column({unique: true})
     email: string;
 

@@ -14,6 +14,7 @@ import { Repository } from "typeorm";
 import { CreateTaskDto } from "../models/dto/create-task.dto";
 import { UpdateTaskDto } from "../models/dto/update-task.dto";
 import { Task } from "../models/entities/task.entity";
+import * as fs from 'fs';
 
 @Injectable()
 export class TaskService {
@@ -28,10 +29,11 @@ export class TaskService {
         
     ) {}
     
-    async create(idProject: string, createTaskDto: CreateTaskDto, user: User): Promise<any | Task> {
+    async create(idProject: string, createTaskDto: CreateTaskDto, user: User, file: Express.Multer.File): Promise<any | Task> {
       const findProject = await this.projectService.findProject(idProject);
       const assigneerId = await user.id
-      const { title, description, reporter, priority, status, level, type, image } = createTaskDto;
+      const { title, description, reporter, priority, status, level, type} = createTaskDto;
+      
       const task = this.taskRepository.create({
         title,
         description,
@@ -40,10 +42,16 @@ export class TaskService {
         status,
         type,
         level,
-        image,
+        image: null,
         project: findProject,
         assigneer: assigneerId,
       });
+      if (file) {
+        if (fs.existsSync(task.image)) {
+            fs.unlinkSync(`./${task.image}`);
+        }
+        task.image = file.path;
+      }
 
       if(type == 'bug') {
         const token = Math.random().toString(20).substring(2, 12);
@@ -62,9 +70,11 @@ export class TaskService {
         await this.taskRepository.save(task);
         return DataReponse('Please check your email', task)
       }
+      await this.taskRepository.save(task);
+      return DataReponse('Created task successfully', task)
     }
 
-    async getFilters(filterDto: GetFilterDto, idProject: string): Promise<Task[]> {
+    async getFilters(filterDto: GetFilterDto, idProject: string): Promise<any> {
       const { search } = filterDto;
       const query = this.taskRepository.createQueryBuilder('task');
       query.where("task.projectId = :id", {id: idProject})
@@ -77,14 +87,14 @@ export class TaskService {
       }
       try {
         const tasks = await query.getMany();
-        return tasks;
+        return DataReponse('Get many tasks successfully', tasks);
       } catch (error) {
         throw new InternalServerErrorException();
       }
     }
 
-    async update(idProject: string, idTask: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
-      const { title, description, reporter, priority, status, level, type, image } = updateTaskDto
+    async update(idProject: string, idTask: string, updateTaskDto: UpdateTaskDto, file: Express.Multer.File): Promise<any> {
+      const { title, description, reporter, priority, status, level, type} = updateTaskDto
       const findTask = await this.getById(idProject, idTask);
       if(findTask) {
         findTask.title = title;
@@ -94,31 +104,39 @@ export class TaskService {
         findTask.status = status;
         findTask.level = level;
         findTask.type = type;
-        findTask.image = image;
+        if (file) {
+          if (fs.existsSync(findTask.image)) {
+              fs.unlinkSync(`./${findTask.image}`);
+          }
+          findTask.image = file.path;
+        }
       }
       await this.taskRepository.save(findTask)
-      return findTask
+      return DataReponse('Updated task successfully', findTask);
     }
 
-    async delete(idProject: string, idTask: string): Promise<void> {
+    async delete(idProject: string, idTask: string): Promise<any> {
       const findTask = await this.taskRepository.findOne(idTask)
       const findProject = await this.projectService.findProject(idProject)
       if(findTask) {
         const result = await this.taskRepository.delete({ id: idTask, project: findProject});
     
         if(result.affected === 0) {
-          throw new NotFoundException(`Task with ID "${idTask}" not found`)
+          throw new NotFoundException(`Task with ID ${idTask} not found`)
+        }else {
+          return DataReponse('Deleted task successfully', {});
         }
       }
     }
 
-    async getById(idProject: string, idTask: string): Promise<Task> {
+    async getById(idProject: string, idTask: string): Promise<any> {
       const findProject = await this.projectService.findProject(idProject)
       const findTask = await this.taskRepository.findOne({ where: { id: idTask, project: findProject }});
   
       if(!findTask) {
         throw new NotFoundException(`Task with ID ${idTask} not found`);
+      }else {
+        return DataReponse(`Get task by id ${idTask} task successfully`, findTask);
       }
-      return findTask;
     }
 }

@@ -27,13 +27,9 @@ export class ProjectService {
 
 
   async getFilters(filter: GetFilterDto, user: User) : Promise<Project[]> {
-    const { projectCode, search } = filter;
+    const { search } = filter;
     const query = this.projectRepository.createQueryBuilder('project');
     query.where("project.managerId = :id", {id: user.id})
-
-    if(projectCode) {
-      query.andWhere('project.projectCode =:projectCode', { projectCode })
-    }
 
     if (search) {
       query.andWhere(
@@ -154,13 +150,5 @@ export class ProjectService {
 
 
     return DataReponse(`All member in project has ID "${id_project}":`, detailUserResult)
-  }
-
-  async getAllReport(user: User): Promise<any> {
-    const result = await this.projectRepository.find({})
-    return ;
-  }
-  async getReportDetail(user: User): Promise<any> {
-    return ;
   }
 }

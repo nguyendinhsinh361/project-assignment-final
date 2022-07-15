@@ -93,7 +93,7 @@ export class AccountService {
         const user = await this.userService.findOne({email});
         if(user.isActive == true && (await this.validatePassword(password, user.password))) {
             const jwt = await this.jwt(email);
-            return DataReponse(`Login successfully`, {'Access-token': jwt})
+            return DataReponse(`Login successfully`, {'Access-token': jwt, user: user})
         }else {
             throw new UnauthorizedException('Please check your login credentials or confirm email')
         } 

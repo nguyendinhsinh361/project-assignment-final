@@ -9,6 +9,8 @@ import { CreateUserDto } from '../models/dto/create-user.dto';
 import { UserI } from '../models/entities/user.interface';
 import { LoginUserDto } from '../models/dto/login-user.dto';
 import { GetTokenDto } from '../models/dto/get-token.dto';
+import { GetUser } from 'src/shared/config.decorator';
+import { User } from '../models/entities/user.entity';
 
 
 @ApiTags('Account')
@@ -47,7 +49,7 @@ export class AccountController {
     })
     @ApiOperation({ summary: 'Login account' })
     async login(
-        @Body() loginUserDto: LoginUserDto
+        @Body() loginUserDto: LoginUserDto,
     ): Promise<any> {
         return this.accountService.login(loginUserDto);
     }

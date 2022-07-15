@@ -10,6 +10,7 @@ import { configValidationSchema } from './config/config.schema';
 import { ProjectModule } from './api/project/modules/project.module';
 import { TasksModule } from './api/task/modules/task.module';
 import { SubTaskModule } from './api/sub-task/modules/sub-task.module';
+import { ExportExcelModule } from './api/export-excel/modules/export-excel.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { SubTaskModule } from './api/sub-task/modules/sub-task.module';
     ProjectModule,
     TasksModule,
     SubTaskModule,
+    ExportExcelModule,
   ],
   providers: [],
 })

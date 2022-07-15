@@ -5,7 +5,8 @@ import { UserI } from '../models/entities/user.interface';
 import { User } from '../models/entities/user.entity';
 import { Repository } from 'typeorm';
 import { DataReponse } from 'src/shared/data-reponse';
-
+import { UpdateProfile } from '../models/dto/update-profile.dto';
+import * as fs from 'fs';
 
 @Injectable()
 export class UserService {
@@ -21,6 +22,18 @@ export class UserService {
 
   async findById(id: string): Promise<UserI> {
     return await this.userRepository.findOne(id);
+  }
+
+  async updateProfile(id: string, file: Express.Multer.File, updateProfile: UpdateProfile): Promise<UserI> {
+    const findUser = await this.userRepository.findOne(id);
+    if (file) {
+      if (fs.existsSync(findUser.avatar)) {
+          fs.unlinkSync(`./${findUser.avatar}`);
+      }
+      findUser.avatar = file.path;
+  }
+    
+    return this.userRepository.save(findUser);
   }
 
   async authorizeAdmin(id: string): Promise<UserI> {
