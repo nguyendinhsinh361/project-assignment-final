@@ -15,6 +15,7 @@ import { LoginUserDto } from '../models/dto/login-user.dto';
 import { AuthService } from 'src/api/auth/services/auth.service';
 import { GetTokenDto } from '../models/dto/get-token.dto';
 import { User } from '../models/entities/user.entity';
+import { MessageFailedI, MessageSuccessfullyI } from 'src/shared/message.interfacae';
 
 
 @Injectable()
@@ -58,20 +59,20 @@ export class AccountService {
               await this.accountRepository.save({email, token});
               await this.mailerService.sendMail({
                 to: email, 
-                subject: 'Confirm Account', 
-                html: `${token}`,
+                subject: MessageSuccessfullyI.SEND_MAIL, 
+                html: MessageSuccessfullyI.VERIFY_TOKEN + `${token}`,
               });
             }
         } catch (error) {
             if(error.code === '23505') {
-                throw new ConflictException('Email or name already exists')
+                throw DataReponse(MessageFailedI.EMAIL_EXIST, {})
             }else {
-                throw new InternalServerErrorException();
+                throw DataReponse(MessageFailedI.NOT_FOUND, {})
             }
         }
         const resultUser = await this.userService.findOne({email})
         delete resultUser.password
-        return DataReponse(`Please check your email to confirm`, resultUser)
+        return DataReponse(MessageSuccessfullyI.SEND_MAIL, resultUser)
         
     }
 
@@ -81,7 +82,7 @@ export class AccountService {
         user.isActive = true;
         await this.userService.save(user)
         if(user) {
-          return DataReponse(`Confirm account successfully`, {'Acitived': true})
+          return DataReponse(MessageSuccessfullyI.CONFIRM_ACCOUNT, {'Acitived': true})
         }
     }
 
@@ -91,9 +92,9 @@ export class AccountService {
         if(user.isActive == true && (await this.validatePassword(password, user.password))) {
             const jwt = await this.jwt(email);
             delete user.password
-            return DataReponse(`Login successfully`, {'Access-token': jwt, user: user})
+            return DataReponse(MessageSuccessfullyI.LOGIN, {'Access-token': jwt, user: user})
         }else {
-            throw new UnauthorizedException('Please check your login credentials or confirm email')
+            throw DataReponse(MessageFailedI.UNAUTHOR, {})
         } 
     }
 
@@ -109,10 +110,10 @@ export class AccountService {
         await this.mailerService.sendMail({
             to: email, 
             subject: 'Reset your password', 
-            html: `${token}`,
+            html: MessageSuccessfullyI.VERIFY_TOKEN + `${token}`,
         });
 
-        return DataReponse(`Please check your email`, {})
+        return DataReponse(MessageSuccessfullyI.SEND_MAIL, {})
         
     }
 
@@ -125,7 +126,7 @@ export class AccountService {
         const findUser: any = await this.findOne({token});
         const user = await this.userService.findOne({email: findUser.email})
         if(!user) {
-            throw new NotFoundException('User not found !')
+            throw DataReponse(MessageFailedI.NOT_FOUND, {})
         }
 
         const salt = await bcrypt.genSalt();
@@ -133,7 +134,7 @@ export class AccountService {
 
         await this.userService.update(user.id, {password: hashedPassword})
 
-        return DataReponse(`Reset password successfully !`, {})
+        return DataReponse(MessageSuccessfullyI.RESET_PASSWORD, {})
 
     }
 
@@ -145,10 +146,10 @@ export class AccountService {
         await this.mailerService.sendMail({
             to: email, 
             subject: 'Change your password', 
-            html: `${token}`,
+            html: MessageSuccessfullyI.VERIFY_TOKEN + `${token}`,
         });
 
-        return DataReponse(`Please check your email`, {})
+        return DataReponse(MessageSuccessfullyI.SEND_MAIL, {})
 
 
         
@@ -171,10 +172,10 @@ export class AccountService {
         }
 
         if(!user) {
-            throw new NotFoundException('User not found !')
+            throw DataReponse(MessageFailedI.NOT_FOUND, {})
         }
 
-        return DataReponse(`Change password successfully !`, {})
+        return DataReponse(MessageSuccessfullyI.CHANGE_PASSWORD, {})
 
 
     }

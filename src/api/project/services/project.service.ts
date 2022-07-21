@@ -2,10 +2,12 @@
 
 import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { UserRoleEnum } from "src/api/user/models/entities/user-role.enum";
 import { User } from "src/api/user/models/entities/user.entity";
 import { UserService } from "src/api/user/services/user.service";
 import { DataReponse } from "src/shared/data-reponse";
 import { GetFilterDto } from "src/shared/get-filter.dto";
+import { MessageFailedI, MessageSuccessfullyI } from "src/shared/message.interfacae";
 import { Repository } from "typeorm";
 import { AddMemberDto } from "../models/dto/add-member.dto";
 import { CreateProjectDto } from "../models/dto/create-project.dto";
@@ -27,7 +29,7 @@ export class ProjectService {
 
 
   async getFilters(filter: GetFilterDto, user: User) : Promise<any> {
-    if(user.role == 'user') {
+    if(user.role == UserRoleEnum.USER) {
       const result = await this.projects_membersRepository.find({ where: { userId: user.id}})
         const promiseDetailProjectResult = result.map(async (res) => {
         const foundProject = await this.projects_membersRepository.findOne({where: { id: res.id }})
@@ -35,7 +37,7 @@ export class ProjectService {
         return foundProjectDetail;
       })
       const detailProjectsResult = await Promise.all(promiseDetailProjectResult);
-      return DataReponse(`All projects of the user have the id ${user.id}:`, detailProjectsResult)
+      return DataReponse(MessageSuccessfullyI.GET_MANY_PROJECTS, detailProjectsResult)
 
     }else {
       const queryP = this.projectRepository.createQueryBuilder('project');
@@ -49,15 +51,16 @@ export class ProjectService {
       }
       try {
         const projects = await queryP.getMany();
-        return DataReponse(`All projects of the user have the id ${user.id}:`, projects)
+        return DataReponse(MessageSuccessfullyI.GET_MANY_PROJECTS, projects)
       } catch (error) {
-        throw new InternalServerErrorException();
+        throw DataReponse(MessageFailedI.GET_MANY_PROJECTS, {})
       }
     }
   }
 
-  async createProject(createProjectDto: CreateProjectDto, user: User): Promise<Project> {
-    const { name, projectCode, startDate, endDate, price, maximum_members } = createProjectDto;
+  async createProject(createProjectDto: CreateProjectDto, user: User): Promise<any> {
+    try {
+      const { name, projectCode, startDate, endDate, price, maximum_members } = createProjectDto;
     const project = await this.projectRepository.create({
       name,
       projectCode,
@@ -69,22 +72,26 @@ export class ProjectService {
     });
 
     await this.projectRepository.save(project);
-    return project
+    delete project.manager.projectsManager;
+    return DataReponse(MessageSuccessfullyI.CREATE, project)
+    } catch (err) {
+      throw DataReponse(err, {});
+    }
   }
 
   async delete(id: string, user: User): Promise<any> {
     const result = await this.projectRepository.delete({ id, manager: user});
     
     if(result.affected === 0) {
-      throw new NotFoundException(`Task with ID "${id}" not found`)
+      throw DataReponse(MessageFailedI.NOT_FOUND, {})
     }else {
-      return DataReponse('Delete project successfully', {})
+      return DataReponse(MessageSuccessfullyI.DELETE, {})
     }
   }
 
   async update(id: string, updateProjectDto: UpdateProjectDto, user: User): Promise<any> {
     const { name, projectCode, status, startDate, endDate, price, maximum_members, managerId } = updateProjectDto
-    const project = await this.getById(id);
+    const project = await this.projectRepository.findOne({ where: { id }});
 
     project.name = name;
     project.projectCode = projectCode;
@@ -100,16 +107,16 @@ export class ProjectService {
       project.manager = findManager;
     }
     await this.projectRepository.save(project)
-    return DataReponse('Delete project successfully', project)
+    return DataReponse(MessageSuccessfullyI.UPDATE, project)
   }
 
-  async getById(id: string): Promise<Project> {
+  async getById(id: string): Promise<any> {
     const found = await this.projectRepository.findOne({ where: { id }});
 
     if(!found) {
-      throw new NotFoundException(`Project with ID ${id} not found`);
+      throw DataReponse(MessageFailedI.NOT_FOUND, {})
     }
-    return found;
+    return DataReponse(MessageSuccessfullyI.GET_DETAIL, found)
   }
 
   async findProject(id: string) : Promise<Project> {
@@ -131,9 +138,9 @@ export class ProjectService {
       delete projects_members.user.password
 
       await this.projects_membersRepository.save(projects_members);
-      return DataReponse('Add member successfully', projects_members)
+      return DataReponse(MessageSuccessfullyI.ADD_MEMBER, projects_members)
     }else {
-      return DataReponse(`Member has ID ${foundMemberAdd.id} was added before`, {})
+      return DataReponse(MessageFailedI.NOT_FOUND, {})
     }
   }
 
@@ -144,24 +151,28 @@ export class ProjectService {
     const result = await this.projects_membersRepository.delete({ project: foundProject, user: foundMemberDelete});
     
     if(result.affected === 0) {
-      throw new NotFoundException(`User with ID ${foundMemberDelete.id} not found`)
+      throw DataReponse(MessageFailedI.NOT_FOUND, {})
     }else {
-      return DataReponse('Delete member successfully', {})
+      return DataReponse(MessageSuccessfullyI.DELETE, {})
     }
   }
 
   async getAllMemberInProject(id_project: string) : Promise<any> {
     const result = await this.projects_membersRepository.find({ where: { projectId: id_project}})
-    const promiseUsersResult = result.map(async (res) => {
-      const foundUser = await this.projects_membersRepository.findOne({where: { id: res.id }})
-      const foundUserDetail = await this.userService.findOne({ where: { id: foundUser.userId}});
-      delete foundUserDetail.password;   
-      delete foundUserDetail.projectsAssigned;   
-      return foundUserDetail;
-    })
-    const UsersResult = await Promise.all(promiseUsersResult);
-
-
-    return DataReponse(`All member in project has ID ${id_project}:`, UsersResult)
+    if(result) {
+      const promiseUsersResult = result.map(async (res) => {
+        const foundUser = await this.projects_membersRepository.findOne({where: { id: res.id }})
+        const foundUserDetail = await this.userService.findOne({ where: { id: foundUser.userId}});
+        delete foundUserDetail.password;   
+        delete foundUserDetail.projectsAssigned;   
+        return foundUserDetail;
+      })
+      const UsersResult = await Promise.all(promiseUsersResult);
+  
+  
+      return DataReponse(MessageSuccessfullyI.GET_MANY_MEMBERS, UsersResult)
+    }else {
+      return DataReponse(MessageFailedI.GET_MANY_MEMBERS, {})
+    }
   }
 }

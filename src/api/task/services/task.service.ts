@@ -15,7 +15,8 @@ import { CreateTaskDto } from "../models/dto/create-task.dto";
 import { UpdateTaskDto } from "../models/dto/update-task.dto";
 import { Task } from "../models/entities/task.entity";
 import * as fs from 'fs';
-import { SubTaskService } from "src/api/sub-task/services/sub-task.service";
+import { TaskTypeEnum } from "../models/entities/task-type.enum";
+import { MessageFailedI, MessageSuccessfullyI } from "src/shared/message.interfacae";
 
 @Injectable()
 export class TaskService {
@@ -53,7 +54,7 @@ export class TaskService {
         task.image = file.path;
       }
 
-      if(type == 'bug') {
+      if(type == TaskTypeEnum.BUG) {
         const token = Math.random().toString(20).substring(2, 12);
         const checkEmail = await this.accountService.findOne({email: user.email});
         if(!checkEmail) {
@@ -63,15 +64,15 @@ export class TaskService {
         }
         await this.mailerService.sendMail({
             to: user.email, 
-            subject: 'There is a bug that needs you to fix soon', 
-            html: `${token}`,
+            subject: MessageSuccessfullyI.MAIL_BUG, 
+            html: MessageSuccessfullyI.VERIFY_TOKEN + `${token}`,
         });
 
         await this.taskRepository.save(task);
-        return DataReponse('Please check your email', task)
+        return DataReponse(MessageSuccessfullyI.SEND_MAIL, task)
       }
       await this.taskRepository.save(task);
-      return DataReponse('Created task successfully', task)
+      return DataReponse(MessageSuccessfullyI.CREATE, task)
     }
 
     async getFilters(filterDto: GetFilterDto, idProject: string): Promise<any> {
@@ -87,15 +88,16 @@ export class TaskService {
       }
       try {
         const tasks = await query.getMany();
-        return DataReponse('Get many tasks successfully', tasks);
+        return DataReponse(MessageSuccessfullyI.GET_MANY_TASKS, tasks);
       } catch (error) {
-        throw new InternalServerErrorException();
+        throw DataReponse(MessageFailedI.GET_MANY_TASKS, {});
       }
     }
 
     async update(idProject: string, idTask: string, updateTaskDto: UpdateTaskDto, file: Express.Multer.File): Promise<any> {
       const { title, description, reporter, priority, status, level, type} = updateTaskDto
-      const findTask = await this.getById(idProject, idTask);
+      const findProject = await this.projectService.findProject(idProject)
+      const findTask = await this.taskRepository.findOne({ where: { id: idTask, project: findProject }});
       if(findTask) {
         findTask.title = title;
         findTask.description = description;
@@ -110,9 +112,13 @@ export class TaskService {
           }
           findTask.image = file.path;
         }
+
+        await this.taskRepository.save(findTask)
+        return DataReponse(MessageSuccessfullyI.UPDATE, findTask);
+      }else {
+        return DataReponse(MessageFailedI.NOT_FOUND, {});
       }
-      await this.taskRepository.save(findTask)
-      return DataReponse('Updated task successfully', findTask);
+      
     }
 
     async delete(idProject: string, idTask: string): Promise<any> {
@@ -122,9 +128,9 @@ export class TaskService {
         const result = await this.taskRepository.delete({ id: idTask, project: findProject});
     
         if(result.affected === 0) {
-          throw new NotFoundException(`Task with ID ${idTask} not found`)
+          throw DataReponse(MessageFailedI.NOT_FOUND, {})
         }else {
-          return DataReponse('Deleted task successfully', {});
+          return DataReponse(MessageSuccessfullyI.DELETE, {});
         }
       }
     }
@@ -134,9 +140,9 @@ export class TaskService {
       const findTask = await this.taskRepository.findOne({ where: { id: idTask, project: findProject }});
   
       if(!findTask) {
-        throw new NotFoundException(`Task with ID ${idTask} not found`);
+        throw DataReponse(MessageFailedI.NOT_FOUND, {})
       }else {
-        return DataReponse(`Get task by id ${idTask} task successfully`, findTask);
+        return DataReponse(MessageSuccessfullyI.GET_DETAIL, findTask)
       }
     }
 }

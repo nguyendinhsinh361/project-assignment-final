@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { DataReponse } from 'src/shared/data-reponse';
 import { UpdateProfile } from '../models/dto/update-profile.dto';
 import * as fs from 'fs';
+import { MessageFailedI, MessageSuccessfullyI } from 'src/shared/message.interfacae';
 
 @Injectable()
 export class UserService {
@@ -18,12 +19,16 @@ export class UserService {
 
   async findAll(): Promise<any> {
     const allUsers =  await this.userRepository.find();
-    return DataReponse(`Get all users successfully`, allUsers)
+    return DataReponse(MessageSuccessfullyI.GET_MANY_MEMBERS, allUsers)
   }
 
   async findById(id: string): Promise<any> {
     const foundUser = await this.userRepository.findOne(id);
-    return DataReponse(`Find user by id ${id} successfully`, foundUser)
+    if(foundUser) {
+      return DataReponse(MessageSuccessfullyI.GET_DETAIL, foundUser)
+    }else {
+      throw DataReponse(MessageFailedI.NOT_FOUND, {})
+    }
 
   }
 
@@ -37,18 +42,23 @@ export class UserService {
   }
     
     const user = await this.userRepository.save(findUser);
-    return DataReponse(`Update user by id ${id} successfully`, user)
+    delete user.password
+    return DataReponse(MessageSuccessfullyI.UPDATE, user)
   }
 
   async authorizeAdmin(id: string): Promise<any> {
     const findUser = await this.userRepository.findOne(id);
-    findUser.role = 'admin';
-    const resultUser = await this.userRepository.save(findUser);
-    return DataReponse(`Give permission user has id ${id} to admin successfully`, resultUser)
+    if(findUser) {
+      findUser.role = 'admin';
+      const resultUser = await this.userRepository.save(findUser);
+      return DataReponse(MessageSuccessfullyI.GIVE_PERMISSIONS, resultUser)
+    }else {
+      return DataReponse(MessageFailedI.GIVE_PERMISSIONS, {})
+    }
   }
 
   async watchInfo(user: User) : Promise<any> {
-    return DataReponse('Get Detail info user logged in successfully', user)
+    return DataReponse(MessageSuccessfullyI.GET_DETAIL, user)
   }
 
   async findOne(condition: any): Promise<User> {
@@ -63,9 +73,9 @@ export class UserService {
     const result = await this.userRepository.delete(id);
   
     if(result.affected === 0) {
-      throw new NotFoundException(`Task with ID ${id} not found`)
+      throw DataReponse(MessageFailedI.NOT_FOUND, {})
     }else {
-      return DataReponse('Delete successfully', {})
+      return DataReponse(MessageSuccessfullyI.DELETE, {})
     }
   }
 
