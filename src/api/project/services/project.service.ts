@@ -127,18 +127,22 @@ export class ProjectService {
     const foundProject = await this.projectRepository.findOne({ where: { id: id_project, manager: user}});
     const foundMemberAdd = await this.userService.findOne(email)
 
-    const foundProject_Members = await this.projects_membersRepository.findOne({ where: { project: foundProject, user: foundMemberAdd}});
+    if(foundMemberAdd) {
+      const foundProject_Members = await this.projects_membersRepository.findOne({ where: { project: foundProject, user: foundMemberAdd}});
 
-    if(!foundProject_Members) {
-      const projects_members = this.projects_membersRepository.create({
-        project: foundProject,
-        user: foundMemberAdd,
-      })
-      
-      delete projects_members.user.password
+      if(!foundProject_Members) {
+        const projects_members = this.projects_membersRepository.create({
+          project: foundProject,
+          user: foundMemberAdd,
+        })
+        
+        delete projects_members.user.password
 
-      await this.projects_membersRepository.save(projects_members);
-      return DataReponse(MessageSuccessfullyI.ADD_MEMBER, projects_members)
+        await this.projects_membersRepository.save(projects_members);
+        return DataReponse(MessageSuccessfullyI.ADD_MEMBER, projects_members)
+      }else {
+        throw new NotFoundException(MessageFailedI.NOT_FOUND)
+      }
     }else {
       throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }
