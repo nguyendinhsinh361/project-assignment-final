@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Project } from "src/api/project/models/entities/project.entity";
 import { ProjectService } from "src/api/project/services/project.service";
@@ -26,9 +26,10 @@ export class SubTaskService {
     
     async create(idProject: string, idTask: string, createSubTaskDto: CreateSubTaskDto, user: User, file: Express.Multer.File): Promise<any> {
       const findProject = await this.projectService.findProject(idProject);
-      const assigneerId = await user.id
+      const findTask = await this.taskRepository.findOne({id: idTask});
+      const assigneerId = user.id
       const { title, description, reporter, priority, status, level } = createSubTaskDto;
-      if(findProject) {
+      if(findProject && findTask.assigneer == Number(assigneerId)) {
         const sub_task = await this.taskRepository.create({
           title,
           description,
@@ -39,7 +40,7 @@ export class SubTaskService {
           level,
           parentId: idTask,
           project: findProject,
-          assigneer: assigneerId,
+          assigneer: findTask.assigneer
         });
         if (file) {
           if (fs.existsSync(sub_task.image)) {
@@ -71,7 +72,7 @@ export class SubTaskService {
         const subTaskResults = tasks.filter(sub => sub.parentId == idTask);
         return DataReponse(MessageSuccessfullyI.GET_MANY_TASKS, subTaskResults);
       } catch (error) {
-        throw DataReponse(MessageFailedI.NOT_FOUND, {});
+        throw new NotFoundException(MessageFailedI.NOT_FOUND)
       }
     }
 
@@ -106,7 +107,7 @@ export class SubTaskService {
       if(findTask) {
         const result = await this.taskRepository.delete({ id: idSubTask, project: findProject});
         if(result.affected === 0) {
-          throw DataReponse(MessageFailedI.NOT_FOUND, {})
+          throw new NotFoundException(MessageFailedI.NOT_FOUND)
         }else {
           return DataReponse(MessageSuccessfullyI.DELETE, {});
         }
@@ -117,7 +118,7 @@ export class SubTaskService {
       const findProject = await this.projectService.findProject(idProject)
       const findSubTask = await this.taskRepository.findOne({ where: { id: idSubTask, parentId: idTask, project: findProject }});
       if(!findSubTask) {
-        throw DataReponse(MessageFailedI.NOT_FOUND, {})
+        throw new NotFoundException(MessageFailedI.NOT_FOUND)
       }else {
         return DataReponse(MessageSuccessfullyI.GET_DETAIL, findSubTask)
       }

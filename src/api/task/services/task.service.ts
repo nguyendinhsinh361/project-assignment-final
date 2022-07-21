@@ -32,8 +32,7 @@ export class TaskService {
     
     async create(idProject: string, createTaskDto: CreateTaskDto, user: User, file: Express.Multer.File): Promise<any | Task> {
       const findProject = await this.projectService.findProject(idProject);
-      const assigneerId = await user.id
-      const { title, description, reporter, priority, status, level, type} = createTaskDto;
+      const { title, description, reporter, priority, status, level, type, assigneer} = createTaskDto;
       
       const task = await this.taskRepository.create({
         title,
@@ -45,7 +44,7 @@ export class TaskService {
         level,
         image: null,
         project: findProject,
-        assigneer: assigneerId,
+        assigneer: Number(assigneer),
       });
       if (file) {
         if (fs.existsSync(task.image)) {
@@ -90,7 +89,7 @@ export class TaskService {
         const tasks = await query.getMany();
         return DataReponse(MessageSuccessfullyI.GET_MANY_TASKS, tasks);
       } catch (error) {
-        throw DataReponse(MessageFailedI.GET_MANY_TASKS, {});
+        throw new NotFoundException(MessageFailedI.NOT_FOUND)
       }
     }
 
@@ -116,7 +115,7 @@ export class TaskService {
         await this.taskRepository.save(findTask)
         return DataReponse(MessageSuccessfullyI.UPDATE, findTask);
       }else {
-        return DataReponse(MessageFailedI.NOT_FOUND, {});
+        throw new NotFoundException(MessageFailedI.NOT_FOUND)
       }
       
     }
@@ -128,7 +127,7 @@ export class TaskService {
         const result = await this.taskRepository.delete({ id: idTask, project: findProject});
     
         if(result.affected === 0) {
-          throw DataReponse(MessageFailedI.NOT_FOUND, {})
+          throw new NotFoundException(MessageFailedI.NOT_FOUND)
         }else {
           return DataReponse(MessageSuccessfullyI.DELETE, {});
         }
@@ -140,7 +139,7 @@ export class TaskService {
       const findTask = await this.taskRepository.findOne({ where: { id: idTask, project: findProject }});
   
       if(!findTask) {
-        throw DataReponse(MessageFailedI.NOT_FOUND, {})
+        throw new NotFoundException(MessageFailedI.NOT_FOUND)
       }else {
         return DataReponse(MessageSuccessfullyI.GET_DETAIL, findTask)
       }

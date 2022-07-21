@@ -36,6 +36,10 @@ export class CreateTaskDto {
   @IsNotEmpty()
   level: TaskLevelEnum;
 
+  @ApiProperty({required: false })
+  @IsOptional()
+  assigneer?: string;
+
   @IsOptional()
   @ApiProperty({ type: 'string', format: 'binary', required: false })
   image?: Express.Multer.File;

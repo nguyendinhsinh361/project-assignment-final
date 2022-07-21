@@ -65,7 +65,7 @@ export class AccountService {
             }
         } catch (error) {
             if(error.code === '23505') {
-                throw DataReponse(MessageFailedI.EMAIL_EXIST, {})
+                throw new InternalServerErrorException(MessageFailedI.EMAIL_EXIST)
             }else {
                 throw DataReponse(MessageFailedI.NOT_FOUND, {})
             }
@@ -89,13 +89,17 @@ export class AccountService {
     async login(loginUserDto: LoginUserDto): Promise<any> {
         const { email, password } = loginUserDto
         const user = await this.userService.findOne({email});
-        if(user.isActive == true && (await this.validatePassword(password, user.password))) {
-            const jwt = await this.jwt(email);
-            delete user.password
-            return DataReponse(MessageSuccessfullyI.LOGIN, {'Access-token': jwt, user: user})
-        }else {
-            throw DataReponse(MessageFailedI.UNAUTHOR, {})
-        } 
+        try {
+            if(user.isActive == true && (await this.validatePassword(password, user.password))) {
+                const jwt = await this.jwt(email);
+                delete user.password
+                return DataReponse(MessageSuccessfullyI.LOGIN, {'Access-token': jwt, user: user})
+            }else {
+                throw new NotFoundException(MessageFailedI.UNAUTHOR)
+            } 
+        } catch (error) {
+            throw new NotFoundException(MessageFailedI.UNAUTHOR)
+        }
     }
 
     async forgotPassword(sendEmailForgotDto: SendEmailForgotDto) {
@@ -126,7 +130,7 @@ export class AccountService {
         const findUser: any = await this.findOne({token});
         const user = await this.userService.findOne({email: findUser.email})
         if(!user) {
-            throw DataReponse(MessageFailedI.NOT_FOUND, {})
+            throw new NotFoundException(MessageFailedI.NOT_FOUND)
         }
 
         const salt = await bcrypt.genSalt();
@@ -172,7 +176,7 @@ export class AccountService {
         }
 
         if(!user) {
-            throw DataReponse(MessageFailedI.NOT_FOUND, {})
+            throw new NotFoundException(MessageFailedI.NOT_FOUND)
         }
 
         return DataReponse(MessageSuccessfullyI.CHANGE_PASSWORD, {})

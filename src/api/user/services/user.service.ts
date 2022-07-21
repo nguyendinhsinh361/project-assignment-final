@@ -27,7 +27,7 @@ export class UserService {
     if(foundUser) {
       return DataReponse(MessageSuccessfullyI.GET_DETAIL, foundUser)
     }else {
-      throw DataReponse(MessageFailedI.NOT_FOUND, {})
+      throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }
 
   }
@@ -73,7 +73,7 @@ export class UserService {
     const result = await this.userRepository.delete(id);
   
     if(result.affected === 0) {
-      throw DataReponse(MessageFailedI.NOT_FOUND, {})
+      throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }else {
       return DataReponse(MessageSuccessfullyI.DELETE, {})
     }

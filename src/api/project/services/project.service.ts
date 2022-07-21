@@ -45,7 +45,7 @@ export class ProjectService {
       queryP.where("project.managerId = :id", {id: user.id})
       if (search) {
         queryP.andWhere(
-          '(LOWER(project.name) LIKE LOWER(:search) OR LOWER(project.price) LIKE LOWER(:search))',
+          '(LOWER(project.name) LIKE LOWER(:search) OR LOWER(project.projectCode) LIKE LOWER(:search))',
           { search: `%${search}%` },
         );
       }
@@ -53,7 +53,7 @@ export class ProjectService {
         const projects = await queryP.getMany();
         return DataReponse(MessageSuccessfullyI.GET_MANY_PROJECTS, projects)
       } catch (error) {
-        throw DataReponse(MessageFailedI.GET_MANY_PROJECTS, {})
+        throw new NotFoundException(MessageFailedI.NOT_FOUND)
       }
     }
   }
@@ -75,7 +75,7 @@ export class ProjectService {
     delete project.manager.projectsManager;
     return DataReponse(MessageSuccessfullyI.CREATE, project)
     } catch (err) {
-      throw DataReponse(err, {});
+      throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }
   }
 
@@ -83,7 +83,7 @@ export class ProjectService {
     const result = await this.projectRepository.delete({ id, manager: user});
     
     if(result.affected === 0) {
-      throw DataReponse(MessageFailedI.NOT_FOUND, {})
+      throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }else {
       return DataReponse(MessageSuccessfullyI.DELETE, {})
     }
@@ -114,7 +114,7 @@ export class ProjectService {
     const found = await this.projectRepository.findOne({ where: { id }});
 
     if(!found) {
-      throw DataReponse(MessageFailedI.NOT_FOUND, {})
+      throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }
     return DataReponse(MessageSuccessfullyI.GET_DETAIL, found)
   }
@@ -140,7 +140,7 @@ export class ProjectService {
       await this.projects_membersRepository.save(projects_members);
       return DataReponse(MessageSuccessfullyI.ADD_MEMBER, projects_members)
     }else {
-      return DataReponse(MessageFailedI.NOT_FOUND, {})
+      throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }
   }
 
@@ -151,7 +151,7 @@ export class ProjectService {
     const result = await this.projects_membersRepository.delete({ project: foundProject, user: foundMemberDelete});
     
     if(result.affected === 0) {
-      throw DataReponse(MessageFailedI.NOT_FOUND, {})
+      throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }else {
       return DataReponse(MessageSuccessfullyI.DELETE, {})
     }
@@ -172,7 +172,7 @@ export class ProjectService {
   
       return DataReponse(MessageSuccessfullyI.GET_MANY_MEMBERS, UsersResult)
     }else {
-      return DataReponse(MessageFailedI.GET_MANY_MEMBERS, {})
+      throw new NotFoundException(MessageFailedI.NOT_FOUND)
     }
   }
 }

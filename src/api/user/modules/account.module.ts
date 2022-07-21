@@ -20,7 +20,7 @@ import { UserModule } from './user.module';
         port: 1025,
       },
       defaults: {
-        from: 'admin@example.com'
+        from: 'mailhog_server@example.com'
       }
     }),
     forwardRef(() => UserModule),
