@@ -16,15 +16,18 @@ export class UserService {
     private userRepository: Repository<User>,
   ) { }
 
-  async findAll(): Promise<UserI[]> {
-    return this.userRepository.find();
+  async findAll(): Promise<any> {
+    const allUsers =  await this.userRepository.find();
+    return DataReponse(`Get all users successfully`, allUsers)
   }
 
-  async findById(id: string): Promise<UserI> {
-    return await this.userRepository.findOne(id);
+  async findById(id: string): Promise<any> {
+    const foundUser = await this.userRepository.findOne(id);
+    return DataReponse(`Find user by id ${id} successfully`, foundUser)
+
   }
 
-  async updateProfile(id: string, file: Express.Multer.File, updateProfile: UpdateProfile): Promise<UserI> {
+  async updateProfile(id: number, file: Express.Multer.File, updateProfile: UpdateProfile): Promise<any> {
     const findUser = await this.userRepository.findOne(id);
     if (file) {
       if (fs.existsSync(findUser.avatar)) {
@@ -33,17 +36,19 @@ export class UserService {
       findUser.avatar = file.path;
   }
     
-    return this.userRepository.save(findUser);
+    const user = await this.userRepository.save(findUser);
+    return DataReponse(`Update user by id ${id} successfully`, user)
   }
 
-  async authorizeAdmin(id: string): Promise<UserI> {
+  async authorizeAdmin(id: string): Promise<any> {
     const findUser = await this.userRepository.findOne(id);
     findUser.role = 'admin';
-    return this.userRepository.save(findUser);
+    const resultUser = await this.userRepository.save(findUser);
+    return DataReponse(`Give permission user has id ${id} to admin successfully`, resultUser)
   }
 
-  async watchInfo(user: User) : Promise<User> {
-    return user
+  async watchInfo(user: User) : Promise<any> {
+    return DataReponse('Get Detail info user logged in successfully', user)
   }
 
   async findOne(condition: any): Promise<User> {
@@ -58,17 +63,19 @@ export class UserService {
     const result = await this.userRepository.delete(id);
   
     if(result.affected === 0) {
-      throw new NotFoundException(`Task with ID "${id}" not found`)
+      throw new NotFoundException(`Task with ID ${id} not found`)
     }else {
       return DataReponse('Delete successfully', {})
     }
   }
 
   async update(id: number, data: any): Promise<any> {
-    return this.userRepository.update(id, data);
+    const updateUser = await this.userRepository.update(id, data);
+    return updateUser
   }
 
-  create(data: any) {
-    return this.userRepository.create(data);
+  async create(data: any) {
+    const user = await this.userRepository.create(data);
+    return user
   }
 }

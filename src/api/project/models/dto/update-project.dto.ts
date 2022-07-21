@@ -28,6 +28,10 @@ export class UpdateProjectDto {
   @ApiProperty()
   @IsNotEmpty()
   price: number;
+  
+  @ApiProperty()
+  @IsNotEmpty()
+  maximum_members: number
 
   @ApiProperty()
   @IsNotEmpty()

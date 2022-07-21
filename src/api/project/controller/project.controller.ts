@@ -24,8 +24,7 @@ export class ProjectController {
 
   @Get('/get-many')
   @ApiBearerAuth()
-  @Roles(UserRoleEnum.USER)
-  @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({
     status: 200,
     description: 'Search by condition',
@@ -34,7 +33,7 @@ export class ProjectController {
   getFilters(
     @Query() filterDto: GetFilterDto,
     @GetUser() user: User,
-    ): Promise<Project[]> {
+    ): Promise<any> {
       return this.projectService.getFilters(filterDto, user);
   }
 
@@ -50,7 +49,7 @@ export class ProjectController {
   create(
     @Body() createProjectDto: CreateProjectDto,
     @GetUser() user: User,
-    ): Promise<Project> {
+    ): Promise<any> {
       return this.projectService.createProject(createProjectDto, user);
   }
 
@@ -83,12 +82,13 @@ export class ProjectController {
     @Param('id_project') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
     @GetUser() user: User,
-    ): Promise<Project> {
+    ): Promise<any> {
       return this.projectService.update(id, updateProjectDto, user);
   }
 
   @Get('/get-detail/:id_project')
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({
     status: 200,
     description: 'Find project by id',
@@ -98,7 +98,7 @@ export class ProjectController {
     return this.projectService.getById(id);
   }
 
-  @Post('/add_member/:id_projec')
+  @Post('/add_member/:id_project')
   @ApiBearerAuth()
   @Roles(UserRoleEnum.USER)
   @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
@@ -111,7 +111,7 @@ export class ProjectController {
     @Param('id_project') id_project: string,
     @Body() email: AddMemberDto,
     @GetUser() user: User,
-    ): Promise<Project> {
+    ): Promise<any> {
       return this.projectService.addMember(id_project, email, user);
   }
 
@@ -128,7 +128,7 @@ export class ProjectController {
     @Param('id_project') id_project: string,
     @Body() email: DeleteMember,
     @GetUser() user: User,
-    ): Promise<Project> {
+    ): Promise<any> {
       return this.projectService.deleteMember(id_project, email, user);
   }
 
@@ -142,7 +142,7 @@ export class ProjectController {
   @ApiOperation({ summary: 'Get all members in project' })
   getAllMemberInProject(
       @Param('id_project') id_project: string,
-    ): Promise<Project[]> {
+    ): Promise<any> {
       return this.projectService.getAllMemberInProject(id_project);
   }
 }

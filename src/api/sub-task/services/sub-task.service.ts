@@ -27,7 +27,7 @@ export class SubTaskService {
       const findProject = await this.projectService.findProject(idProject);
       const assigneerId = await user.id
       const { title, description, reporter, priority, status, level } = createSubTaskDto;
-      const sub_task = this.taskRepository.create({
+      const sub_task = await this.taskRepository.create({
         title,
         description,
         reporter,

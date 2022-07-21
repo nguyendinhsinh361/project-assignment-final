@@ -30,6 +30,9 @@ export class Project {
     @Column({ nullable: true })
     price: number;
 
+    @Column({ nullable: true })
+    maximum_members: number;
+
     @CreateDateColumn()
     createdAt: Date;
 

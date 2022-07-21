@@ -114,9 +114,9 @@ export class SubTaskController {
     @UseGuards(JwtAuthGuard)
     @ApiResponse({
         status: 200,
-        description: 'Create task',
+        description: 'Get sub-task by id',
     })
-    @ApiOperation({ summary: 'Create task' })
+    @ApiOperation({ summary: 'Get sub-task by id' })
     async getById(
         @Query() query: GetIdDto,
         @Param('id_sub_task') idSubTask: string, 

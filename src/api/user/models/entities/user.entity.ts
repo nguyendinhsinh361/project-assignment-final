@@ -40,7 +40,7 @@ export class User {
 
     @OneToMany(() => Projects_Members, (project: Projects_Members) => project.user, { eager: true })
     @JoinTable({ name: 'projects_members'})
-    projects: Project[];
+    projectsAssigned: Project[];
 }
 
 

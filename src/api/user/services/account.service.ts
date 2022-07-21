@@ -47,12 +47,11 @@ export class AccountService {
         const { name, email, password } = createUserDto;
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(password, salt);
-        const user = this.userService.create({
+        const user = await this.userService.create({
             name,
             email,
             password: hashedPassword
         });
-    
         try {
           const token = Math.random().toString(20).substring(2, 12);
             if(await this.userService.save(user)) {
@@ -72,10 +71,8 @@ export class AccountService {
         }
         const resultUser = await this.userService.findOne({email})
         delete resultUser.password
-        return {
-          message: 'Please check your email to confirm',
-          resultUser
-        }
+        return DataReponse(`Please check your email to confirm`, resultUser)
+        
     }
 
     async confirmAccount(token: GetTokenDto) {
@@ -93,6 +90,7 @@ export class AccountService {
         const user = await this.userService.findOne({email});
         if(user.isActive == true && (await this.validatePassword(password, user.password))) {
             const jwt = await this.jwt(email);
+            delete user.password
             return DataReponse(`Login successfully`, {'Access-token': jwt, user: user})
         }else {
             throw new UnauthorizedException('Please check your login credentials or confirm email')
@@ -114,9 +112,7 @@ export class AccountService {
             html: `${token}`,
         });
 
-        return {
-            message: 'Please check your email'
-        }
+        return DataReponse(`Please check your email`, {})
         
     }
 
@@ -137,9 +133,8 @@ export class AccountService {
 
         await this.userService.update(user.id, {password: hashedPassword})
 
-        return {
-            message: 'Reset password successfully !',
-        }
+        return DataReponse(`Reset password successfully !`, {})
+
     }
 
     async confirmChangePassword(sendEmailForgotDto: SendEmailForgotDto) {
@@ -153,9 +148,9 @@ export class AccountService {
             html: `${token}`,
         });
 
-        return {
-            message: 'Please check your email'
-        }
+        return DataReponse(`Please check your email`, {})
+
+
         
     }
 
@@ -179,9 +174,9 @@ export class AccountService {
             throw new NotFoundException('User not found !')
         }
 
-        return {
-            message: 'Reset password successfully !',
-        }
+        return DataReponse(`Change password successfully !`, {})
+
+
     }
 
     async updateReset(id: number, data: any) {

@@ -12,6 +12,7 @@ import { UserI } from '../models/entities/user.interface';
 import { UserService } from '../services/user.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { RoleSuperAdmin } from 'src/shared/role-super-admin.guard';
 
 @ApiTags('User')
 @Controller('user')
@@ -38,8 +39,8 @@ export class UserController {
 
     @Delete('/delete/:id')
     @ApiBearerAuth()
-    @Roles(UserRoleEnum.USER)
-    @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
+    @Roles(UserRoleEnum.SUPER_ADMIN)
+    @UseGuards(JwtAuthGuard, RoleSuperAdmin)
     @ApiResponse({
         status: 200,
         description: 'Delete user',
@@ -52,7 +53,7 @@ export class UserController {
         return this.userService.delete(id, user);
     }
 
-    @Patch('/update/:id')
+    @Patch('/update-profile')
     @UseInterceptors(FileInterceptor('avatar', {
         storage: diskStorage({
             destination: './upload/avatar-img',
@@ -69,20 +70,20 @@ export class UserController {
     @ApiBearerAuth()
     @ApiResponse({
         status: 201,
-        description: 'Give permission to admin',
+        description: 'Update profie user',
     })
-    @ApiOperation({ summary: 'Give permission to admin' })
+    @ApiOperation({ summary: 'Update profie user' })
     async update(
-        @Param('id') id:string,
+        @GetUser() user: User,
         @UploadedFile() file: Express.Multer.File,
         @Body() updateProfile: UpdateProfile,
     ): Promise<UserI> {
-        return this.userService.updateProfile(id, file, updateProfile);
+        return this.userService.updateProfile(user.id, file, updateProfile);
     }
 
     @Patch('/authority/:id')
-    @Roles(UserRoleEnum.USER)
-    @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
+    @Roles(UserRoleEnum.SUPER_ADMIN)
+    @UseGuards(JwtAuthGuard, RoleSuperAdmin)
     @ApiBearerAuth()
     @ApiResponse({
         status: 201,

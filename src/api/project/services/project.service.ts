@@ -26,33 +26,45 @@ export class ProjectService {
   ) {}
 
 
-  async getFilters(filter: GetFilterDto, user: User) : Promise<Project[]> {
-    const { search } = filter;
-    const query = this.projectRepository.createQueryBuilder('project');
-    query.where("project.managerId = :id", {id: user.id})
+  async getFilters(filter: GetFilterDto, user: User) : Promise<any> {
+    if(user.role == 'user') {
+      const result = await this.projects_membersRepository.find({ where: { userId: user.id}})
+        const promiseDetailProjectResult = result.map(async (res) => {
+        const foundProject = await this.projects_membersRepository.findOne({where: { id: res.id }})
+        const foundProjectDetail = await this.projectRepository.findOne({ where: { id: foundProject.projectId}});
+        return foundProjectDetail;
+      })
+      const detailProjectsResult = await Promise.all(promiseDetailProjectResult);
+      return DataReponse(`All projects of the user have the id ${user.id}:`, detailProjectsResult)
 
-    if (search) {
-      query.andWhere(
-        '(LOWER(project.name) LIKE LOWER(:search) OR LOWER(project.price) LIKE LOWER(:search))',
-        { search: `%${search}%` },
-      );
-    }
-    try {
-      const projects = await query.getMany();
-      return projects;
-    } catch (error) {
-      throw new InternalServerErrorException();
+    }else {
+      const queryP = this.projectRepository.createQueryBuilder('project');
+      const { search } = filter;
+      queryP.where("project.managerId = :id", {id: user.id})
+      if (search) {
+        queryP.andWhere(
+          '(LOWER(project.name) LIKE LOWER(:search) OR LOWER(project.price) LIKE LOWER(:search))',
+          { search: `%${search}%` },
+        );
+      }
+      try {
+        const projects = await queryP.getMany();
+        return DataReponse(`All projects of the user have the id ${user.id}:`, projects)
+      } catch (error) {
+        throw new InternalServerErrorException();
+      }
     }
   }
 
   async createProject(createProjectDto: CreateProjectDto, user: User): Promise<Project> {
-    const { name, projectCode, startDate, endDate, price } = createProjectDto;
-    const project = this.projectRepository.create({
+    const { name, projectCode, startDate, endDate, price, maximum_members } = createProjectDto;
+    const project = await this.projectRepository.create({
       name,
       projectCode,
       startDate,
       endDate,
       price,
+      maximum_members,
       manager: user,
     });
 
@@ -70,8 +82,8 @@ export class ProjectService {
     }
   }
 
-  async update(id: string, updateProjectDto: UpdateProjectDto, user: User): Promise<Project> {
-    const { name, projectCode, status, startDate, endDate, price, managerId } = updateProjectDto
+  async update(id: string, updateProjectDto: UpdateProjectDto, user: User): Promise<any> {
+    const { name, projectCode, status, startDate, endDate, price, maximum_members, managerId } = updateProjectDto
     const project = await this.getById(id);
 
     project.name = name;
@@ -80,6 +92,7 @@ export class ProjectService {
     project.startDate = startDate;
     project.endDate = endDate;
     project.price = price;
+    project.maximum_members = maximum_members;
     
     if(managerId) {
       const findManager = await this.userService.findOne({id: managerId});
@@ -87,7 +100,7 @@ export class ProjectService {
       project.manager = findManager;
     }
     await this.projectRepository.save(project)
-    return project;
+    return DataReponse('Delete project successfully', project)
   }
 
   async getById(id: string): Promise<Project> {
@@ -120,18 +133,18 @@ export class ProjectService {
       await this.projects_membersRepository.save(projects_members);
       return DataReponse('Add member successfully', projects_members)
     }else {
-      return DataReponse(`Member has ID "${foundMemberAdd.id}" was added before`, {})
+      return DataReponse(`Member has ID ${foundMemberAdd.id} was added before`, {})
     }
   }
 
   async deleteMember(id_project: string, email: DeleteMember, user: User): Promise<any> {
     const foundProject = await this.projectRepository.findOne({ where: { id: id_project, manager: user}});
-    const foundMemberAdd = await this.userService.findOne(email)
+    const foundMemberDelete = await this.userService.findOne(email)
     
-    const result = await this.projects_membersRepository.delete({ project: foundProject, user: foundMemberAdd});
+    const result = await this.projects_membersRepository.delete({ project: foundProject, user: foundMemberDelete});
     
     if(result.affected === 0) {
-      throw new NotFoundException(`User with ID "${foundMemberAdd.id}" not found`)
+      throw new NotFoundException(`User with ID ${foundMemberDelete.id} not found`)
     }else {
       return DataReponse('Delete member successfully', {})
     }
@@ -139,16 +152,16 @@ export class ProjectService {
 
   async getAllMemberInProject(id_project: string) : Promise<any> {
     const result = await this.projects_membersRepository.find({ where: { projectId: id_project}})
-    const promiseDetailUserResult = result.map(async (res) => {
+    const promiseUsersResult = result.map(async (res) => {
       const foundUser = await this.projects_membersRepository.findOne({where: { id: res.id }})
       const foundUserDetail = await this.userService.findOne({ where: { id: foundUser.userId}});
       delete foundUserDetail.password;   
-      delete foundUserDetail.projects;   
+      delete foundUserDetail.projectsAssigned;   
       return foundUserDetail;
     })
-    const detailUserResult = await Promise.all(promiseDetailUserResult);
+    const UsersResult = await Promise.all(promiseUsersResult);
 
 
-    return DataReponse(`All member in project has ID "${id_project}":`, detailUserResult)
+    return DataReponse(`All member in project has ID ${id_project}:`, UsersResult)
   }
 }

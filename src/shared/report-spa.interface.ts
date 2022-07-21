@@ -5,7 +5,7 @@ export class ReportSuperAdminI {
     project_completed: number;
     project_failed: number;
     project_pending: number;
-    member_per_project_rate: number;
-    average_project_revenue: number;
-    
+    member_per_project_rate: number| string;
+    average_project_revenue: number | string;
+ 
 }

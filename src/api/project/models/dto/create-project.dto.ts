@@ -23,4 +23,8 @@ export class CreateProjectDto {
   @ApiProperty()
   @IsNotEmpty()
   price: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  maximum_members: number;
 }

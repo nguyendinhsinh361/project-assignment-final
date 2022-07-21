@@ -21,7 +21,7 @@ export class Projects_Members {
     @Exclude({ toPlainOnly: true })
     project: Project;     
 
-    @ManyToOne((_type) => User, (user) => user.projects, { eager: false })
+    @ManyToOne((_type) => User, (user) => user.projectsAssigned, { eager: false })
     @Exclude({ toPlainOnly: true })
     user: User;  
 

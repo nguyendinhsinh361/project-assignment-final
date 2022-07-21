@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import { Controller, Get, Header, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Header, Param, Res, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/api/auth/guards/jwt-auth.guard";
 import { UserRoleEnum } from "src/api/user/models/entities/user-role.enum";
@@ -33,23 +33,27 @@ export class ExportExcelController {
         @GetUser() user: User,
         @Res() res: Response,
     ) {
-        const result = await this.exportExcelService.downloadExcel();
+        const result = await this.exportExcelService.getAllReportSPA(user);
         console.log(result);
         res.download(`${result}`)
     }
 
-    // @Get('/:id_project/export-detail')
-    // @ApiBearerAuth()
-    // // @Roles(UserRoleEnum.USER)
-    // // @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
-    // @ApiResponse({
-    //     status: 200,
-    //     description: 'Get report detail',
-    // })
-    // @ApiOperation({ summary: 'Get report detail' })
-    // async getReportDetail(
-    //     @GetUser() user: User,
-    //     ): Promise<any> {
-    //     return this.exportExcelService.getReportDetail(user);
-    // }
+    @Get('/:id_project/export-detail')
+    @ApiBearerAuth()
+    @Roles(UserRoleEnum.USER)
+    @UseGuards(JwtAuthGuard, RoleAdminOrSuperAdmin)
+    @ApiResponse({
+        status: 200,
+        description: 'Get report detail',
+    })
+    @ApiOperation({ summary: 'Get report detail' })
+    async getReportDetail(
+        @Param('id_project') id_project: string,
+        @GetUser() user: User,
+        @Res() res: Response,
+    ): Promise<any> {
+        const result = await this.exportExcelService.getReportDetail(id_project, user);
+        console.log(result);
+        res.download(`${result}`)
+    }
 }

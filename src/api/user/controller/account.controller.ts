@@ -6,11 +6,9 @@ import { SendEmailResetDto } from '../models/dto/send-email-reset.dt';
 import { SendEmailForgotDto } from '../models/dto/send-email-forgot.dto';
 import { SendEmailChangetDto } from '../models/dto/send-email-change.dto';
 import { CreateUserDto } from '../models/dto/create-user.dto';
-import { UserI } from '../models/entities/user.interface';
 import { LoginUserDto } from '../models/dto/login-user.dto';
 import { GetTokenDto } from '../models/dto/get-token.dto';
 import { GetUser } from 'src/shared/config.decorator';
-import { User } from '../models/entities/user.entity';
 
 
 @ApiTags('Account')
@@ -27,7 +25,7 @@ export class AccountController {
         type: CreateUserDto,
     })
     @ApiOperation({ summary: 'Register account' })
-    async register(@Body() createUserDto: CreateUserDto): Promise<UserI> {
+    async register(@Body() createUserDto: CreateUserDto): Promise<any> {
         return this.accountService.register(createUserDto)
     }
 

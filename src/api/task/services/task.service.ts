@@ -15,6 +15,7 @@ import { CreateTaskDto } from "../models/dto/create-task.dto";
 import { UpdateTaskDto } from "../models/dto/update-task.dto";
 import { Task } from "../models/entities/task.entity";
 import * as fs from 'fs';
+import { SubTaskService } from "src/api/sub-task/services/sub-task.service";
 
 @Injectable()
 export class TaskService {
@@ -25,8 +26,7 @@ export class TaskService {
         @InjectRepository(AccountEntity)
         private taskRepository: Repository<Task>,
         private projectService: ProjectService,
-        private accountService: AccountService,
-        
+        private accountService: AccountService,    
     ) {}
     
     async create(idProject: string, createTaskDto: CreateTaskDto, user: User, file: Express.Multer.File): Promise<any | Task> {
@@ -34,7 +34,7 @@ export class TaskService {
       const assigneerId = await user.id
       const { title, description, reporter, priority, status, level, type} = createTaskDto;
       
-      const task = this.taskRepository.create({
+      const task = await this.taskRepository.create({
         title,
         description,
         reporter,
